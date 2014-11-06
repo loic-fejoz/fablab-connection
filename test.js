@@ -12,6 +12,7 @@ function Member(url, name, photo) {
     } else {
 	self.photo = ko.observable('http://www.gravatar.com/avatar/00000000000000000000000000000000?d=mm&f=y');
     }
+    self.org = ko.observable();
 }
 
 function PeopleViewModel() {
@@ -46,11 +47,13 @@ function PeopleViewModel() {
 		if (name) {
 		    m.name(name);
 		}
+		var org = props['org']
+		if (org) {
+		    m.org(org);
+		}
 	    }
 	}
     };
-    // self.addPeople(new Member("http://www.example.com/steve", "Steve", undefined));
-    // self.addPeople(new Member("http://www.example.com/bert", "Bert", undefined));
 }
 
     /* Spider part */
