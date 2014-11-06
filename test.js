@@ -1,6 +1,61 @@
 (function ( $ ) {
+
+var people_view_model;
+
+/* Data visualisation part */
+function Member(url, name, photo) {
+    var self = this;
+    self.name = ko.observable(name);
+    self.url = ko.observable(url);
+    if (photo) {
+	self.photo = ko.observable(photo);
+    } else {
+	self.photo = ko.observable('http://www.gravatar.com/avatar/00000000000000000000000000000000?d=mm&f=y');
+    }
+}
+
+function PeopleViewModel() {
+    var self = this;
+    // Editable data
+    self.people = ko.observableArray([]);
+    self.people_directory = {};
+    self.addPeople = function(p) {
+	self.people.push(p);
+	self.people_directory[p.url()] = p;
+    };
+    self.hasPeople = function(url) {
+	return url in self.people_directory;
+    };
+    self.updatePeople = function (p) {
+	var props =  p['properties'];
+	if (props) {
+	    var url = props['url'];
+	    if (url) {
+		var m;
+		if (self.hasPeople(url)) {
+		    m = self.people_directory[url];
+		} else {
+		    m = new Member(url, "", undefined);
+		    self.addPeople(m);
+		}
+		var photo = props['photo']
+		if (photo) {
+		    m.photo(photo);
+		}
+		var name = props['name']
+		if (name) {
+		    m.name(name);
+		}
+	    }
+	}
+    };
+    // self.addPeople(new Member("http://www.example.com/steve", "Steve", undefined));
+    // self.addPeople(new Member("http://www.example.com/bert", "Bert", undefined));
+}
+
+    /* Spider part */
     var visited = {};
-    var to_visit = ['http://localhost/mediawiki/index.php/Accueil'];
+    var to_visit = [];
 
     function parseMicroformat(node) {
         var options = {
@@ -12,6 +67,7 @@
 	if (items['items']) {
 	    var url;
 	    $.each(items['items'], function (i, el) {
+		people_view_model.updatePeople(el);
 		url = el['properties']['url'];
 		if (url) {
 		    if (visited[url] == undefined) {
@@ -53,5 +109,18 @@
 	window.setInterval(spider, 5000);
     }
 
-    spider();
+$( document ).ready(function() {
+    people_view_model = new PeopleViewModel();
+    ko.applyBindings(people_view_model);
+
+    $('#addressbar').submit(function (event) {
+	event.preventDefault();
+	var url = $('#address').val();
+	console.log('submitted: ' + url);
+	to_visit.push(url);
+	spider();
+	return false;
+    });
+}); 
+
 }( jQuery ));
