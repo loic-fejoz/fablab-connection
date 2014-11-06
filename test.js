@@ -57,6 +57,7 @@ function PeopleViewModel() {
 }
 
     /* Spider part */
+    var requests_counter = 0;
     var visited = {};
     var to_visit = [];
 
@@ -100,7 +101,10 @@ function PeopleViewModel() {
             success: parseMF,
             cache: false
 	};
-	$.ajax(options);
+	$.ajax(options).always(function() {
+	    requests_counter = requests_counter - 1;
+	});
+	requests_counter = requests_counter + 1;
     }
 
     function spider() {
@@ -109,7 +113,10 @@ function PeopleViewModel() {
 	    current_url = to_visit.shift();
 	    visit(current_url);
 	}
-	window.setInterval(spider, 5000);
+	console.log('requests_counter=' + requests_counter);
+	if (requests_counter > 0) {
+	    window.setTimeout(spider, 1000);
+	}
     }
 
 $( document ).ready(function() {

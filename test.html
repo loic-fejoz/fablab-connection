@@ -16,11 +16,11 @@
   </form>
   <table>
     <thead>
-      <tr><th>Photo</th><th>Nom</th><th>FabLab</th></tr>
+      <tr><th>Photo</th><th>Nom</th><th>Organisation</th></tr>
     </thead>
     <tbody data-bind="foreach: people">
       <tr>
-	<td><img  data-bind="attr: { src: photo, title: photo}"/></td>
+	<td><img  data-bind="attr: { src: photo, title: photo}" width="80"/></td>
         <td><a data-bind="text: name, attr: { href: url, title: url}"></a></td>
         <td><a data-bind="text: org"></a></td>
       </tr> 
