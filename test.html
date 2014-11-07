@@ -2,18 +2,20 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width">
   <title>FabLab Connection</title>
   <script src="//ajax.aspnetcdn.com/ajax/knockout/knockout-3.0.0.js" type="text/javascript" ></script>
   <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
   <script src="js/microformat-shiv.min.js" type="text/javascript" ></script>
 </head>
 <body>
-  <h1>FabLab connection</h1>
-  
+  <h1>FabLab Connection</h1>
   <form id="addressbar">
-    <input type="url" id="address" style="width: 800px;" value="http://localhost/mediawiki/index.php/Accueil" />
-    <button id="submit" type="submit" >GO</button>
+    <label for="address">Where to start looking for data?</label><br/>
+    <input type="url" id="address" style="width: 100%; max-width: 800px;" value="http://localhost/mediawiki/index.php/Accueil" />
+    <button id="submit" type="submit" style="background-color: #5bb75b; color: #ffffff" >GO</button>
   </form>
+  <hr />
   <table>
     <thead>
       <tr><th>Photo</th><th>Nom</th><th>Organisation</th></tr>
@@ -27,12 +29,13 @@
     </tbody>
   </table>
   <hr />
-
-  <textarea id="output" style="width: 800px; height: 320px;">
+  <h2>Debug part</h2>
+  <textarea id="output" style="width: 100%; max-width: 800px; height: 320px;">
   </textarea>
   <hr />
   <div id="underanalysis">
   </div>
+  <hr />
   <script src="test.js" type="text/javascript" ></script>
 </body>
 </html>

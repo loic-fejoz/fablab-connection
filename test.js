@@ -67,7 +67,7 @@ function PeopleViewModel() {
         };
         var items = microformats.getItems(options);
         var output = $('#output');
-        $(output).text(output.text() + '\n' + JSON.stringify(items));
+        output.text(output.text() + '\n' + JSON.stringify(items));
 	if (items['items']) {
 	    var url;
 	    $.each(items['items'], function (i, el) {
@@ -84,11 +84,20 @@ function PeopleViewModel() {
     };
 
     function parseMF(data, textStatus, jqXHR) {
-        var d = $(data).find('.h-card');
+	/* Find all .h-card in the body part of the html received */
+	/* Looking only the body part also avoid some scripts (like on mediawiki). */
+	/* See http://jsfiddle.net/gb1mavy6/1/ */
+	var body_start = data.indexOf("<body");
+        body_start = data.indexOf(">", body_start) + 1;
+        var body_end = data.indexOf("</body>");
+        var body_part = data.substring(body_start, body_end);
+        var d = $("<div/>");
+        d.html(data);
+        d = d.find('.h-card');
+	console.log('found ' + d.length);
+	/* Now analyse them all */
 	var underanalysis = $('#underanalysis');
-        d.each( function( i, el ) {
-	    underanalysis.append(el);
-        });
+	underanalysis.append(d);
         parseMicroformat(underanalysis.get(0));
 	underanalysis.empty();
     };
@@ -98,8 +107,7 @@ function PeopleViewModel() {
 	visited[url] = true;
 	var options = {
             url: url,
-            success: parseMF,
-            cache: false
+            success: parseMF
 	};
 	$.ajax(options).always(function() {
 	    requests_counter = requests_counter - 1;
