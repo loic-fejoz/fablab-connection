@@ -1,7 +1,7 @@
 package main
 
 import (
-//	"bytes"
+	//	"bytes"
 	"flag"
 	"fmt"
 	"github.com/PuerkitoBio/fetchbot"
@@ -9,22 +9,29 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-//	"runtime"
-//	"strings"
+	//	"runtime"
+	//	"strings"
+	"golang.org/x/net/html"
 	"sync"
 	"time"
-	"golang.org/x/net/html"
 )
 
 var (
 	// Protect access to dup
 	mu sync.Mutex
 	// Duplicates table
-	dup = map[string]bool{}
+	dup            = map[string]bool{}
+	hCardDirectory = map[string]*microformat2.Element{}
 	// Command-line flags
-	seed = flag.String("visit", "http://wiki.nybi.cc/index.php/Utilisateur:Loic.fejoz", "seed URL, ie where to start")
+	seed      = flag.String("visit", "http://wiki.nybi.cc/index.php/Utilisateur:Loic.fejoz", "seed URL, ie where to start")
 	stopAfter = flag.Duration("stopafter", 0, "automatically stop the fetchbot after a given time")
 )
+
+func writePeopleDirectory() {
+	for _, hCard := range hCardDirectory {
+		fmt.Printf("%s\t%s\n", hCard.Properties["name"], hCard.Properties["url"])
+	}
+}
 
 func main() {
 	flag.Parse()
@@ -85,6 +92,8 @@ func main() {
 		fmt.Printf("[ERR] GET %s - %s\n", *seed, err)
 	}
 	q.Block()
+	writePeopleDirectory()
+	fmt.Printf("bye\n")
 }
 
 // logHandler prints the fetch information and dispatches the call to the wrapped Handler.
@@ -119,6 +128,17 @@ func enqueueLinks(ctx *fetchbot.Context, result *microformat2.Result) {
 	for _, h_card := range result.Items {
 		urls := h_card.Properties["url"]
 		if urls != nil {
+			// Keep (or consolidate) the h_card in the directory
+			if len(urls) > 0 {
+				theUrl := urls[0].(string)
+				previous := hCardDirectory[theUrl]
+				if previous == nil {
+					hCardDirectory[theUrl] = h_card
+				} else {
+					hCardDirectory[theUrl] = microformat2.Append(previous, h_card)
+				}
+
+			}
 			for _, url := range urls {
 				visitUrl(ctx, url.(string))
 			}
