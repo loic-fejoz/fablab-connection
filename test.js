@@ -107,7 +107,10 @@ function PeopleViewModel() {
 	visited[url] = true;
 	var options = {
             url: url,
-            success: parseMF
+            success: parseMF,
+	    xhrFields: {
+		withCredentials: true
+	    }
 	};
 	$.ajax(options).always(function() {
 	    requests_counter = requests_counter - 1;
