@@ -14,6 +14,7 @@ import (
 	"golang.org/x/net/html"
 	"sync"
 	"time"
+	"encoding/json"
 )
 
 var (
@@ -28,9 +29,15 @@ var (
 )
 
 func writePeopleDirectory() {
+	fmt.Printf("[\n");
 	for _, hCard := range hCardDirectory {
-		fmt.Printf("%s\t%s\n", hCard.Properties["name"], hCard.Properties["url"])
+		b, err := json.MarshalIndent(hCard, "", "  ")
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("%s,\n", b);
 	}
+	fmt.Printf("]\n");
 }
 
 func main() {
@@ -123,21 +130,23 @@ func visitUrl(ctx *fetchbot.Context, url string) {
 	}
 }
 
+func registerHCard(hCard *microformat2.Element) {
+	// Keep (or consolidate) the hCard in the directory if has an identifier, be it UID or first URL
+	theUID, err := microformat2.GetUID(hCard)
+	if err != nil {
+		previous := hCardDirectory[theUID]
+		if previous == nil {
+			hCardDirectory[theUID] = hCard
+		} else {
+			hCardDirectory[theUID] = microformat2.Append(previous, hCard)
+		}
+	}
+}
+
 func enqueueLinksOf(ctx *fetchbot.Context, hCard *microformat2.Element) {
+	registerHCard(hCard)
 	urls := hCard.Properties["url"]
 	if urls != nil {
-		// Keep (or consolidate) the hCard in the directory under first url
-		// TODO: use u-uid as identifier if any
-		if len(urls) > 0 {
-			theUrl := urls[0].(string)
-			previous := hCardDirectory[theUrl]
-			if previous == nil {
-				hCardDirectory[theUrl] = hCard
-			} else {
-				hCardDirectory[theUrl] = microformat2.Append(previous, hCard)
-			}
-
-		}
 		// Enqueue all urls
 		for _, url := range urls {
 			visitUrl(ctx, url.(string))
