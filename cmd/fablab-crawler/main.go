@@ -23,7 +23,7 @@ var (
 	dup            = map[string]bool{}
 	hCardDirectory = map[string]*microformat2.Element{}
 	// Command-line flags
-	seed      = flag.String("visit", "http://wiki.nybi.cc/index.php/Utilisateur:Loic.fejoz", "seed URL, ie where to start")
+	seed      = flag.String("visit", "http://localhost/mediawiki/index.php/Accueil" /* "http://wiki.nybi.cc/index.php/Utilisateur:Loic.fejoz"*/, "seed URL, ie where to start")
 	stopAfter = flag.Duration("stopafter", 0, "automatically stop the fetchbot after a given time")
 )
 
@@ -123,24 +123,41 @@ func visitUrl(ctx *fetchbot.Context, url string) {
 	}
 }
 
+func enqueueLinksOf(ctx *fetchbot.Context, hCard *microformat2.Element) {
+	urls := hCard.Properties["url"]
+	if urls != nil {
+		// Keep (or consolidate) the hCard in the directory under first url
+		// TODO: use u-uid as identifier if any
+		if len(urls) > 0 {
+			theUrl := urls[0].(string)
+			previous := hCardDirectory[theUrl]
+			if previous == nil {
+				hCardDirectory[theUrl] = hCard
+			} else {
+				hCardDirectory[theUrl] = microformat2.Append(previous, hCard)
+			}
+
+		}
+		// Enqueue all urls
+		for _, url := range urls {
+			visitUrl(ctx, url.(string))
+		}
+	}
+}
+
 func enqueueLinks(ctx *fetchbot.Context, result *microformat2.Result) {
 	mu.Lock()
-	for _, h_card := range result.Items {
-		urls := h_card.Properties["url"]
-		if urls != nil {
-			// Keep (or consolidate) the h_card in the directory
-			if len(urls) > 0 {
-				theUrl := urls[0].(string)
-				previous := hCardDirectory[theUrl]
-				if previous == nil {
-					hCardDirectory[theUrl] = h_card
-				} else {
-					hCardDirectory[theUrl] = microformat2.Append(previous, h_card)
+	for _, hCard := range result.Items {
+		// Visit this card urls from properties
+		enqueueLinksOf(ctx, hCard)
+		orgs := hCard.Properties["org"]
+		// Visit urls of this card's organisation
+		if orgs != nil {
+			for _, org := range orgs {
+				orgElt := org.(*microformat2.Element)
+				if orgElt != nil {
+					enqueueLinksOf(ctx, hCard)
 				}
-
-			}
-			for _, url := range urls {
-				visitUrl(ctx, url.(string))
 			}
 		}
 	}
